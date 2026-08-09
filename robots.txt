@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://soot0-joshr.github.io/StegMS-site/sitemap.xml
