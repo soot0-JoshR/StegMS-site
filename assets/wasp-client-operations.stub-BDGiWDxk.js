@@ -1,0 +1,1 @@
+const e=async()=>{throw new Error("Hosted operations are unavailable in the standalone site.")},t=e,n=e,o=e,l=e,s=e,a=e,i=e,c=e,r=e;export{t as getFileDownloadUrl,n as getPublicationNonce,o as getReceivedKeyEnvelopes,l as getUploadUrl,s as getUserPublicKey,a as getVaultUpdateChallenge,i as publishIdentitySigningKey,c as publishKeyEnvelopes,r as updateClientVault};
