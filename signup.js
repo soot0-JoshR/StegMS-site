@@ -1,5 +1,6 @@
 // Hosted Account sign-up on the website. Posts to the StegMS server's
-// /hosted-account/signup-checkout and continues to Stripe checkout.
+// /hosted-account/signup-checkout and continues to Stripe checkout. A taken
+// username with that account's password subscribes the existing account.
 //
 // Copied as-is into the site (no build step). It runs only on /hosted/signup/,
 // whose Content-Security-Policy allows a connection to exactly the API origin
@@ -61,7 +62,7 @@
     if (local) return show(local);
 
     submit.disabled = true;
-    show('Creating your account…', 'info');
+    show('Continuing to checkout…', 'info');
     try {
       const response = await fetch(`${apiOrigin}/hosted-account/signup-checkout`, {
         method: 'POST',
@@ -77,17 +78,26 @@
         // A non-JSON answer is reported below as unavailable.
       }
 
-      if (response.status === 201) {
+      // 201: a new account; 200: an existing account, after its password
+      // was checked (the username was taken).
+      if (response.status === 201 || response.status === 200) {
+        const created = response.status === 201;
         const url = safeCheckoutUrl(body.url);
-        if (!url) return show('Your account was created, but checkout could not be opened. Sign in to the StegMS app to finish.');
-        show('Account created. Taking you to checkout…', 'info');
+        if (!url) {
+          return show(created
+            ? 'Your account was created, but checkout could not be opened. Sign in to the StegMS app to finish.'
+            : 'Checkout could not be opened. Please try again later.');
+        }
+        show(created ? 'Account created. Taking you to checkout…' : 'Taking you to checkout…', 'info');
         window.location.assign(url);
         return;
       }
       if (body.accountCreated) {
         return show('Your account was created, but checkout could not be started. Sign in to the StegMS app to finish.');
       }
-      if (response.status === 429) return show('Too many sign-up attempts. Please wait a few minutes and try again.');
+      if (response.status === 429 && body.code !== 'PASSWORD_THROTTLED') {
+        return show('Too many sign-up attempts. Please wait a few minutes and try again.');
+      }
       show(typeof body.error === 'string' && body.error ? body.error : 'Sign-up is unavailable right now. Please try again later.');
     } catch {
       show('Could not reach StegMS. Check your connection and try again.');
